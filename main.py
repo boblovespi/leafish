@@ -22,6 +22,23 @@ def handle(read):
         board = chess.Board()
     if "go" in read:
         move = next(board.generate_legal_moves())
+        for m in board.generate_legal_moves():
+            if board.is_capture(m):
+                move = m
+                break
+        for m in board.generate_legal_moves():
+            board.push(m)
+            if board.is_check():
+                move = m
+                break
+            board.pop()
+        for m in board.generate_legal_moves():
+            board.push(m)
+            if board.is_checkmate():
+                move = m
+                break
+            board.pop()
+        
         wrapprint("bestmove " + str(move))
     if "position" in read:
         if "moves" not in read:
