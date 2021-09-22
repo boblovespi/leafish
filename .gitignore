@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+lichess-bot-master/*
+engines/leafish/main.exe
+engines/leafish/python3.dll
+engines/leafish/python38.dll

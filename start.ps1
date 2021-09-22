@@ -1,0 +1,1 @@
+cxfreeze.exe main.py --target-dir .\lichess-bot-master\engines\leafish\ -s
