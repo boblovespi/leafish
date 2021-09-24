@@ -6,7 +6,9 @@ def bad3plysearch(board: chess.Board, evaluator = evaluators.simple) -> chess.Mo
 
 def minimax(f, board, depth, side, alpha, beta):
     if board.is_checkmate():
-        return (side *  20000, 0)
+        return (side *  (-20000 - depth), 0)
+    if board.is_stalemate():
+        return (0, 0)
     if depth == 0:
         return (side * f(board), 0)
     val = -20000

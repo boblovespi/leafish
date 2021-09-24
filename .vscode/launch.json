@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Run Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "build bot",
             "type": "PowerShell",
             "request": "launch",
