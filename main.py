@@ -1,6 +1,6 @@
 import chess
 import datetime
-from searchers import bad3plysearch
+from searchers import bad3plysearch, bad4plyquiescence
 
 board = chess.Board()
 
@@ -10,20 +10,28 @@ def wrapinput():
     global log
     r = input()
     log.write("[in] " + r + "\n")
+    log.flush()
     return r
 
 def wrapprint(str):
     global log
     log.write("[ou] " + str + "\n")
+    log.flush()
     print(str)
+
+def wraptime(start):
+    global log
+    log.write("[tm] " + str(datetime.datetime.now() - start) + "\n")
 
 def handle(read):
     global board
     if "ucinewgame" in read:
         board = chess.Board()
     if "go" in read:
+        start = datetime.datetime.now()
         move = bad3plysearch(board)
         wrapprint("bestmove " + str(move))
+        wraptime(start)
     if "position" in read:
         if "moves" not in read:
             return
