@@ -1,5 +1,6 @@
 import chess
 import evaluators
+from numba import jit
 
 def bad3plysearch(board: chess.Board, evaluator = evaluators.simple) -> chess.Move:
     return minimax(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000)[1]
@@ -30,6 +31,7 @@ def minimax(f, board, depth, side, alpha, beta):
             break
     return (val, m1, c)
 
+# @jit
 def minimaxquie(f, board, depth, side, alpha, beta, isquie = False, quiedepth = 4):
     if board.is_checkmate():
         return ((-20000 - depth - quiedepth), 0, 1)
@@ -42,19 +44,18 @@ def minimaxquie(f, board, depth, side, alpha, beta, isquie = False, quiedepth = 
             return minimaxquie(f, board, quiedepth, side, alpha, beta, True, 0)
     val = -30000 if not isquie else side * f(board)
     c = 0
-    m1 = next(iter(board.generate_legal_moves()))
-    for m in board.generate_legal_moves():
-        if isquie and m.promotion != chess.QUEEN and not board.gives_check(m) and not evaluators.goodcapture(board, m):
-            continue
-        else:
+    m1 = 0
+    for m in board.legal_moves:
+        if not isquie or m.promotion == chess.QUEEN or board.gives_check(m) or evaluators.goodcapture(board, m):
+            c += 1
             b1 = board.copy(stack = False)
             b1.push(m)
             ret = minimaxquie(f, b1, depth - 1, -side, -beta, -alpha, isquie, quiedepth)
             val1 = -ret[0]
             c += ret[2]
-        m1 = m if val1 > val else m1
-        val = val1 if val1 > val else val
-        alpha = max(alpha, val)
-        if alpha >= beta:
-            break
+            m1 = m if val1 > val else m1
+            val = val1 if val1 > val else val
+            alpha = max(alpha, val)
+            if alpha >= beta:
+                break
     return (val, m1, c)
