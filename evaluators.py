@@ -1,4 +1,3 @@
-from re import T
 import chess
 
 piecevaltable = {
@@ -94,27 +93,23 @@ piecepositiontable = {
 }
 
 def simple(b: chess.Board) -> int:
-    pieces = b.piece_map().values()
-    score = 0
-    piececount = 0
-    for piece in pieces:
+    score, kingmid, kingend, piececount = 0, 0, 0, 0
+    for square in chess.SQUARES:
+        piece = b.piece_at(square)
+        if piece == None:
+            continue
         side = 1 if piece.color else -1
         score += side * piecevaltable[piece.piece_type]
         if piece.piece_type == chess.QUEEN:
             piececount += 2
         if piece.piece_type != chess.PAWN:
             piececount += 1
-    endgame = 1 if piececount < 11 else 0
-    for square in chess.SQUARES:
-        piece = b.piece_at(square)
-        if piece == None:
-            continue
-        side = 1 if piece.color else -1
         if piece.piece_type == chess.KING:
-            score += side * piecepositiontable[chess.KING][endgame][-side * square]
+            kingmid += side * piecepositiontable[chess.KING][0][-side * square]
+            kingend += side * piecepositiontable[chess.KING][1][-side * square]
         else:
             score += side * piecepositiontable[piece.piece_type][-side * square]
-    return score
+    return score + (kingend if piececount < 11 else kingmid)
 
 def goodcapture(board: chess.Board, move: chess.Move) -> bool:
     if not board.is_capture(move):

@@ -22,6 +22,7 @@ def wrapprint(str):
 def wraptime(start):
     global log
     log.write("[tm] " + str(datetime.datetime.now() - start) + "\n")
+    log.flush()
 
 def handle(read):
     global board
@@ -29,7 +30,7 @@ def handle(read):
         board = chess.Board()
     if "go" in read:
         start = datetime.datetime.now()
-        move = bad3plysearch(board)
+        move = bad4plyquiescence(board)
         wrapprint("bestmove " + str(move))
         wraptime(start)
     if "position" in read:

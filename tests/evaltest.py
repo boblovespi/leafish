@@ -1,5 +1,4 @@
 import chess
-import searchers
 import evaluators
 import datetime
 

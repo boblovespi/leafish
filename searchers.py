@@ -1,12 +1,11 @@
 import chess
 import evaluators
-from numba import jit
 
 def bad3plysearch(board: chess.Board, evaluator = evaluators.simple) -> chess.Move:
     return minimax(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000)[1]
 
 def bad4plyquiescence(board: chess.Board, evaluator = evaluators.simple) -> chess.Move:
-    return minimaxquie(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000, False)[1]
+    return minimaxquie(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000, False, 2)[1]
 
 def minimax(f, board, depth, side, alpha, beta):
     if board.is_checkmate():
@@ -31,7 +30,6 @@ def minimax(f, board, depth, side, alpha, beta):
             break
     return (val, m1, c)
 
-# @jit
 def minimaxquie(f, board, depth, side, alpha, beta, isquie = False, quiedepth = 4):
     if board.is_checkmate():
         return ((-20000 - depth - quiedepth), 0, 1)
