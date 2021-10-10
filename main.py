@@ -2,6 +2,7 @@ import chess
 import datetime
 from searchers import bad3plysearch, bad4plyquiescence, Searcher
 import threading
+from time import sleep
 
 board = chess.Board()
 alertstop = False
@@ -37,8 +38,13 @@ def handle(read):
     if "ucinewgame" in read:
         board = chess.Board()
     if "go" in read:
+        s1 = read.split(" ")
+        stop = lambda : alertstop
+        mtime = -1
+        if "movetime" in read:
+            mtime = int(s1[s1.index("movetime") + 1]) * 0.001
         start = datetime.datetime.now()
-        searcher = Searcher(board.copy(stack=False), lambda m : handlemove(m, start), lambda : alertstop)
+        searcher = Searcher(board, lambda m : handlemove(m, start), stop, maxtime=mtime)
         searchthread = threading.Thread(target = searcher.start)
         searchthread.start()
         

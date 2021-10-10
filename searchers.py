@@ -1,11 +1,12 @@
 import chess
 import evaluators
+import time as time_
 
 class Searcher:
-    def __init__(self, board: chess.Board, callback, stopcheck = lambda : False, evaluator = evaluators.incsimple, depth: int = 4, usequiescence: bool = True, quiescencedepth: int = 4):
+    def __init__(self, board: chess.Board, callback, stopcheck = lambda : False, evaluator = evaluators.incsimple, depth: int = 4, usequiescence: bool = True, quiescencedepth: int = 4, maxtime: float = -1):
         self.board = board
         self.bestmove = chess.Move.null()
-        self._stopcheck = stopcheck
+        self._stopcheckflag = stopcheck
         self._f = evaluator
         self._d = depth
         self._useq = usequiescence
@@ -14,12 +15,26 @@ class Searcher:
         self._sm = evaluators.simplemidend(board, 0)
         self._se = evaluators.simplemidend(board, 1)
         self._pc = evaluators.ismid(board)
+        self._starttime = 0
+        self._maxtime = maxtime
+        self._maxdepth = depth + quiescencedepth
 
     def start(self):
+        self._starttime = time_.time()
         move = self.minimaxquieinc(self._f, self.board, self._d, 1 if self.board.turn else -1, -30000, 30000, quiedepth=self._qd, piececount=self._pc, sm=self._sm, se=self._se)
         self.bestmove = move[1]
         self._callback(move[1])
 
+    def _stopcheck(self):
+        if self._stopcheckflag():
+            return True
+        if self._maxtime >= 0:
+            time = time_.time() - self._starttime
+            # print(time)
+            if time > self._maxtime:
+                return True
+        return False
+        
     def minimaxquieinc(self, f, board, depth, side, alpha, beta, isquie = False, quiedepth = 4, piececount = 0, sm = 0, se = 0, root = True):
         if depth == 0:
             if isquie:
@@ -37,7 +52,7 @@ class Searcher:
         m1 = 0
         earlybreak = False
         for m in moves:
-            if self._stopcheck():
+            if (depth + quiedepth) > 6 and self._stopcheck():
                 return (val, m1, c, True)
             shouldcheck = not isquie or m.promotion == chess.QUEEN or evaluators.goodcapture(board, m)
             sm1 = f(board, sm, m, 0)
@@ -69,9 +84,6 @@ class Searcher:
             if earlybreak:
                 break
         return (val, m1, c, earlybreak)
-
-    
-
 
 def bad3plysearch(board: chess.Board, evaluator = evaluators.simple) -> chess.Move:
     return minimax(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000)[1]
