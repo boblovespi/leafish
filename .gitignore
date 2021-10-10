@@ -131,3 +131,6 @@ lichess-bot-master/*
 engines/leafish/main.exe
 engines/leafish/python3.dll
 engines/leafish/python38.dll
+engines2/leafish/main.exe
+engines2/leafish/python3.dll
+engines2/leafish/python38.dll

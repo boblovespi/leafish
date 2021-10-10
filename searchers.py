@@ -5,7 +5,7 @@ def bad3plysearch(board: chess.Board, evaluator = evaluators.simple) -> chess.Mo
     return minimax(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000)[1]
 
 def bad4plyquiescence(board: chess.Board, evaluator = evaluators.simple) -> chess.Move:
-    return minimaxquie(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000, False, 2)[1]
+    return minimaxquie(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000, False, 4)[1]
 
 def minimax(f, board, depth, side, alpha, beta):
     if board.is_checkmate():
