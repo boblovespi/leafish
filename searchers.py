@@ -52,7 +52,7 @@ class Searcher:
         m1 = 0
         earlybreak = False
         for m in moves:
-            if (depth + quiedepth) > 6 and self._stopcheck():
+            if (depth + quiedepth) > self._maxdepth - 2 and self._stopcheck():
                 return (val, m1, c, True)
             shouldcheck = not isquie or m.promotion == chess.QUEEN or evaluators.goodcapture(board, m)
             sm1 = f(board, sm, m, 0)
