@@ -94,10 +94,7 @@ piecepositiontable = {
 
 def simple(b: chess.Board) -> int:
     score, kingmid, kingend, piececount = 0, 0, 0, 0
-    for square in chess.SQUARES:
-        piece = b.piece_at(square)
-        if piece == None:
-            continue
+    for square, piece in b.piece_map().items():
         side = 1 if piece.color else -1
         score += side * piecevaltable[piece.piece_type]
         if piece.piece_type == chess.QUEEN:
@@ -111,9 +108,55 @@ def simple(b: chess.Board) -> int:
             score += side * piecepositiontable[piece.piece_type][-side * square]
     return score + (kingend if piececount < 11 else kingmid)
 
+def simplemidend(b: chess.Board, ismid: int) -> int:
+    score = 0
+    for square, piece in b.piece_map().items():
+        side = 1 if piece.color else -1
+        score += side * piecevaltable[piece.piece_type]
+        if piece.piece_type == chess.KING:
+            score += side * piecepositiontable[chess.KING][ismid][-side * square]
+        else:
+            score += side * piecepositiontable[piece.piece_type][-side * square]
+    return score
+
+def incsimple(b: chess.Board, score: int, move: chess.Move, ismid: int) -> int:
+    piece = b.piece_at(move.from_square)
+    side = 1 if piece.color else -1
+    if piece.piece_type == chess.KING:
+        score = score - piecepositiontable[chess.KING][ismid][-side * move.from_square] + piecepositiontable[chess.KING][ismid][-side * move.to_square]
+        if move._from_square == chess.E8 and move.to_square == chess.G8:
+            score = score - side * piecepositiontable[chess.ROOK][-side * chess.H8] + side * piecepositiontable[chess.ROOK][-side * chess.F8]
+        elif move._from_square == chess.E1 and move.to_square == chess.G1:
+            score = score - side * piecepositiontable[chess.ROOK][-side * chess.H1] + side * piecepositiontable[chess.ROOK][-side * chess.F1]
+        elif move._from_square == chess.E8 and move.to_square == chess.C8:
+            score = score - side * piecepositiontable[chess.ROOK][-side * chess.A8] + side * piecepositiontable[chess.ROOK][-side * chess.D8]
+        elif move._from_square == chess.E1 and move.to_square == chess.C1:
+            score = score - side * piecepositiontable[chess.ROOK][-side * chess.A1] + side * piecepositiontable[chess.ROOK][-side * chess.F1]
+    elif move.promotion == None:
+        score = score - side * piecepositiontable[piece.piece_type][-side * move.from_square] + side * piecepositiontable[piece.piece_type][-side * move.to_square]
+    else:
+        score = score - side * piecepositiontable[chess.PAWN][-side * move.from_square] - side * piecevaltable[chess.PAWN]
+        score = score + side * piecepositiontable[move.promotion][-side * move.to_square] + side * piecevaltable[move.promotion]
+
+    if b.is_capture(move):
+        if b.is_en_passant(move):
+            score = score - side * piecevaltable[chess.PAWN] - side * piecepositiontable[chess.PAWN][-side * (b.ep_square - 8 * side)]
+        else:
+            score = score - side * piecevaltable[b.piece_type_at(move.to_square)] - side * piecepositiontable[b.piece_type_at(move.to_square)][-side * move.to_square]
+
 def goodcapture(board: chess.Board, move: chess.Move) -> bool:
     if not board.is_capture(move):
         return False
     if board.is_en_passant(move):
         return True
     return (piecevaltable[board.piece_at(move.to_square).piece_type] - piecevaltable[board.piece_at(move.from_square).piece_type]) > -300
+
+def ismid(board: chess.Board) -> int:
+    piececount = 0
+    pieces = board.piece_map().values()
+    for piece in pieces:
+        if piece.piece_type == chess.QUEEN:
+            piececount += 2
+        if piece.piece_type != chess.PAWN:
+            piececount += 1
+    return piececount
