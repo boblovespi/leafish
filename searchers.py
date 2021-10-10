@@ -88,10 +88,10 @@ def minimaxquieinc(f, board, depth, side, alpha, beta, isquie = False, quiedepth
             return (0, 0, 1)
     if depth == 0:
         if isquie:
-            return (side * se if piececount < 11 else sm , 0, 1)
+            return (side * (se if piececount < 11 else sm) , 0, 1)
         else:
             return minimaxquieinc(f, board, quiedepth, side, alpha, beta, True, 0, piececount, sm, se)
-    val = -30000 if not isquie else side * f(board)
+    val = -30000 if not isquie else side * (se if piececount < 11 else sm)
     c = 0
     m1 = 0
     for m in moves:

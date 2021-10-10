@@ -4,3 +4,4 @@
 # import tests.searchcounttest
 # import tests.evaltest
 import tests.engineprofiletest
+# import tests.incrementalevaltest
