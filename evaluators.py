@@ -120,10 +120,10 @@ def simplemidend(b: chess.Board, ismid: int) -> int:
     return score
 
 def incsimple(b: chess.Board, scorein: int, move: chess.Move, ismid: int) -> int:
-    piece = b.piece_at(move.from_square)
-    side = 1 if piece.color else -1
+    piece = b.piece_type_at(move.from_square)
+    side = 1 if b.turn else -1
     score = scorein
-    if piece.piece_type == chess.KING:
+    if piece == chess.KING:
         score = score - side * piecepositiontable[chess.KING][ismid][-side * move.from_square] + side * piecepositiontable[chess.KING][ismid][-side * move.to_square]
         if move.from_square == chess.E8 and move.to_square == chess.G8:
             score = score - side * piecepositiontable[chess.ROOK][-side * chess.H8] + side * piecepositiontable[chess.ROOK][-side * chess.F8]
@@ -134,7 +134,7 @@ def incsimple(b: chess.Board, scorein: int, move: chess.Move, ismid: int) -> int
         elif move.from_square == chess.E1 and move.to_square == chess.C1:
             score = score - side * piecepositiontable[chess.ROOK][-side * chess.A1] + side * piecepositiontable[chess.ROOK][-side * chess.D1]
     elif move.promotion == None:
-        score = score - side * piecepositiontable[piece.piece_type][-side * move.from_square] + side * piecepositiontable[piece.piece_type][-side * move.to_square]
+        score = score - side * piecepositiontable[piece][-side * move.from_square] + side * piecepositiontable[piece][-side * move.to_square]
     else:
         score = score - side * piecepositiontable[chess.PAWN][-side * move.from_square] - side * piecevaltable[chess.PAWN]
         score = score + side * piecepositiontable[move.promotion][-side * move.to_square] + side * piecevaltable[move.promotion]
@@ -151,7 +151,7 @@ def goodcapture(board: chess.Board, move: chess.Move) -> bool:
         return False
     if board.is_en_passant(move):
         return True
-    return (piecevaltable[board.piece_at(move.to_square).piece_type] - piecevaltable[board.piece_at(move.from_square).piece_type]) > -300
+    return (piecevaltable[board.piece_type_at(move.to_square)] - piecevaltable[board.piece_type_at(move.from_square)]) > -300
 
 def ismid(board: chess.Board) -> int:
     piececount = 0

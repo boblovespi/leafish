@@ -1,8 +1,10 @@
 import chess
 import datetime
-from searchers import bad3plysearch, bad4plyquiescence
+from searchers import bad3plysearch, bad4plyquiescence, Searcher
+import threading
 
 board = chess.Board()
+alertstop = False
 
 log = open("leafish.log", "w")
 
@@ -24,15 +26,22 @@ def wraptime(start):
     log.write("[tm] " + str(datetime.datetime.now() - start) + "\n")
     log.flush()
 
+def handlemove(move, start):
+    global alertstop
+    wrapprint("bestmove " + str(move))
+    wraptime(start)
+    alertstop = False
+
 def handle(read):
-    global board
+    global board, alertstop
     if "ucinewgame" in read:
         board = chess.Board()
     if "go" in read:
         start = datetime.datetime.now()
-        move = bad4plyquiescence(board)
-        wrapprint("bestmove " + str(move))
-        wraptime(start)
+        searcher = Searcher(board.copy(stack=False), lambda m : handlemove(m, start), lambda : alertstop)
+        searchthread = threading.Thread(target = searcher.start)
+        searchthread.start()
+        
     if "position" in read:
         if "moves" not in read:
             return
@@ -44,6 +53,8 @@ def handle(read):
         for move in s:
             if chess.Move.from_uci(move) in board.legal_moves:
                 board.push_uci(move)
+    if "stop" in read:
+        alertstop = True
 
 def main():
     read = wrapinput()
@@ -58,7 +69,6 @@ def main():
     # wrapprint("option name MoveOverhead")
     while "isready" not in read:
         read = wrapinput()
-        log.write("[in] " + read + "\n")
         if "quit" in read:
             log.close()
             quit()
