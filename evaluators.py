@@ -1,4 +1,6 @@
+from math import pi
 import chess
+import random
 
 piecevaltable = {
     chess.PAWN : 100,
@@ -92,6 +94,13 @@ piecepositiontable = {
     chess.KING: (midkingtable, endkingtable)
 }
 
+zorbtable = [[random.getrandbits(64) for i in range(0, 12)] for j in range(0, 64)]
+
+zorbindextable = {
+    chess.WHITE: {k: k - 1 for k in chess.PIECE_TYPES}, 
+    chess.BLACK: {k: k - 1 + 6 for k in chess.PIECE_TYPES}
+}
+
 def simple(b: chess.Board) -> int:
     score, kingmid, kingend, piececount = 0, 0, 0, 0
     for square, piece in b.piece_map().items():
@@ -162,3 +171,12 @@ def ismid(board: chess.Board) -> int:
         if piece.piece_type != chess.PAWN:
             piececount += 1
     return piececount
+
+def zorbhash(board: chess.Board) -> int:
+    h = 0
+    for i in chess.SQUARES:
+        piece = board.piece_type_at(i)
+        color = board.color_at(i)
+        if piece:
+            h ^= zorbtable[i][zorbindextable[color][piece]]
+    return h

@@ -2,6 +2,7 @@ import chess
 import evaluators
 import time as time_
 
+TTFLAG = [EXACT, LOWER, UPPER] = range(0, 3)
 class Searcher:
     def __init__(self, board: chess.Board, callback, stopcheck = lambda : False, evaluator = evaluators.incsimple, depth: int = 4, usequiescence: bool = True, quiescencedepth: int = 4, maxtime: float = -1):
         self.board = board
@@ -18,6 +19,9 @@ class Searcher:
         self._starttime = 0
         self._maxtime = maxtime
         self._maxdepth = depth + quiescencedepth
+        self._ttable = {}
+        self._ttflag = {}
+        self._ttdepth = {}
 
     def start(self):
         self._starttime = time_.time()
@@ -38,33 +42,49 @@ class Searcher:
     def minimaxquieinc(self, f, board, depth, side, alpha, beta, isquie = False, quiedepth = 4, piececount = 0, sm = 0, se = 0, root = True):
         if depth == 0:
             if isquie:
-                return (side * (se if piececount < 11 else sm) , 0, 1, False)
+                return (side * (se if piececount < 11 else sm), 0, 1, False)
             else:
                 return self.minimaxquieinc(f, board, quiedepth, side, alpha, beta, True, 0, piececount, sm, se, False)
+
+        origalpha = alpha
+        hashval = evaluators.zorbhash(board)
+        if hashval in self._ttable and self._ttdepth[hashval] >= depth + quiedepth:
+            flag = self._ttflag[hashval]
+            if flag == EXACT:
+                return (self._ttable[hashval], 0, 1, False)
+            elif flag == LOWER:
+                alpha = max(alpha, self._ttable[hashval])
+            elif flag == UPPER:
+                beta = min(beta, self._ttable[hashval])
+            if alpha >= beta:
+                return (self._ttable[hashval], 0, 1, False)
+
         moves = board.legal_moves
         if not any(moves):
             if board.is_check(): # checkmate
                 return ((-20000 - depth - quiedepth), 0, 1, False)
             else: # stalemate
                 return (0, 0, 1, False)
-        val = -30000 if not isquie else side * (se if piececount < 11 else sm)
+        
+        maxscore = -30000 if not isquie else side * (se if piececount < 11 else sm)
         c = 0
-        m1 = 0
+        bestmove = 0
         earlybreak = False
-        for m in moves:
+
+        for move in moves:
             if (depth + quiedepth) > self._maxdepth - 5 and self._stopcheck():
-                return (val, m1, c, True)
-            shouldcheck = not isquie or m.promotion == chess.QUEEN or evaluators.goodcapture(board, m)
-            sm1 = f(board, sm, m, 0)
-            se1 = f(board, se, m, 1)
+                return (maxscore, bestmove, c, True)
+            shouldcheck = not isquie or move.promotion == chess.QUEEN or evaluators.goodcapture(board, move)
+            sm1 = f(board, sm, move, 0)
+            se1 = f(board, se, move, 1)
             pc1 = piececount
-            if board.is_capture(m) and not board.is_en_passant(m):
-                pt = board.piece_type_at(m.to_square)
+            if board.is_capture(move) and not board.is_en_passant(move):
+                pt = board.piece_type_at(move.to_square)
                 if pt == chess.QUEEN:
                     pc1 -= 2
                 if pt != chess.PAWN:
                     pc1 -= 1
-            board.push(m)
+            board.push(move)
             if not shouldcheck and not board.is_check():
                 board.pop()
                 continue
@@ -72,18 +92,28 @@ class Searcher:
             ret = self.minimaxquieinc(f, board, depth - 1, -side, -beta, -alpha, isquie, quiedepth, pc1, sm1, se1, False)
             board.pop()
             earlybreak = ret[3]
-            val1 = -ret[0]
+            score = -ret[0]
             c += ret[2]
-            m1 = m if val1 > val else m1
-            val = val1 if val1 > val else val
+            bestmove = move if score > maxscore else bestmove
+            maxscore = score if score > maxscore else maxscore
             if root:
-                self.bestmove = m1
-            alpha = max(alpha, val)
+                self.bestmove = bestmove
+            alpha = max(alpha, maxscore)
             if alpha >= beta:
                 break
             if earlybreak:
                 break
-        return (val, m1, c, earlybreak)
+        
+        self._ttable[hashval] = maxscore
+        if maxscore <= origalpha:
+            self._ttflag[hashval] = UPPER
+        elif maxscore >= beta:
+            self._ttflag[hashval] = LOWER
+        else:
+            self._ttflag[hashval] = EXACT
+        self._ttdepth[hashval] = quiedepth + depth
+
+        return (maxscore, bestmove, c, earlybreak)
 
 def bad3plysearch(board: chess.Board, evaluator = evaluators.simple) -> chess.Move:
     return minimax(evaluator, board, 4, 1 if board.turn else -1, -30000, 30000)[1]
