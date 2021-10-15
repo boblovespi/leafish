@@ -16,11 +16,11 @@ def wrapinput():
     log.flush()
     return r
 
-def wrapprint(str):
+def wrapprint(string):
     global log
-    log.write("[ou] " + str + "\n")
+    print(string, flush = True)
+    log.write("[ou] " + string + "\n")
     log.flush()
-    print(str)
 
 def wraptime(start):
     global log
@@ -42,7 +42,11 @@ def handle(read):
         stop = lambda : alertstop
         mtime = -1
         if "movetime" in read:
-            mtime = int(s1[s1.index("movetime") + 1]) * 0.001
+            mtime = int(s1[s1.index("movetime") + 1]) * 0.001 * 0.95
+        if board.turn and "wtime" in read:
+            mtime = int(s1[s1.index("wtime") + 1]) * 0.001 * 0.2
+        if not board.turn and "btime" in read:
+            mtime = int(s1[s1.index("btime") + 1]) * 0.001 * 0.2
         start = datetime.datetime.now()
         searcher = Searcher(board, lambda m : handlemove(m, start), stop, maxtime=mtime)
         searchthread = threading.Thread(target = searcher.start)
